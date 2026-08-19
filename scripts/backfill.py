@@ -26,7 +26,8 @@ def gh_api(path, header=None):
     cmd = ["gh", "api", path]
     if header:
         cmd += ["-H", header]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True,
+                            encoding="utf-8", errors="replace")
     if result.returncode != 0:
         sys.exit(f"gh api {path} failed:\n{result.stderr}")
     return result.stdout
