@@ -13,22 +13,24 @@ MARGIN_L, MARGIN_R, MARGIN_T, MARGIN_B = 78, 36, 64, 56
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+# Styled after GitHub's own Insights graphs (Primer accent blue,
+# thin solid grid, gradient area fill).
 THEMES = {
     "light": {
-        "text": "#24292f",
-        "muted": "#57606a",
-        "grid": "#d0d7de",
-        "line": "#e0524e",
-        "area": "#e0524e",
-        "dot": "#e0524e",
+        "text": "#1f2328",
+        "muted": "#59636e",
+        "grid": "#d8dee4",
+        "line": "#0969da",
+        "area": "#0969da",
+        "dot": "#0969da",
     },
     "dark": {
         "text": "#e6edf3",
         "muted": "#8b949e",
-        "grid": "#30363d",
-        "line": "#ff7b72",
-        "area": "#ff7b72",
-        "dot": "#ff7b72",
+        "grid": "#21262d",
+        "line": "#4493f8",
+        "area": "#4493f8",
+        "dot": "#4493f8",
     },
 }
 
@@ -37,6 +39,15 @@ FONT = "-apple-system,'Segoe UI',Helvetica,Arial,sans-serif"
 
 def _fmt_stars(n):
     return f"{n:,}"
+
+
+def _fmt_axis(n):
+    """Abbreviate axis ticks like GitHub's graphs: 500, 1k, 2.5k, 40k."""
+    n = int(n)
+    if n >= 1000:
+        v = n / 1000
+        return f"{v:g}k"
+    return str(n)
 
 
 def _fmt_date(d):
@@ -91,6 +102,12 @@ def render_svg(points, repo, theme_name, updated=None):
         f'viewBox="0 0 {WIDTH} {HEIGHT}" role="img" '
         f'aria-label="Star history of {repo}">'
     )
+    parts.append(
+        f'<defs><linearGradient id="area-{theme_name}" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0" stop-color="{t["area"]}" stop-opacity="0.22"/>'
+        f'<stop offset="1" stop-color="{t["area"]}" stop-opacity="0"/>'
+        f'</linearGradient></defs>'
+    )
 
     # Title and subtitle
     parts.append(
@@ -111,11 +128,11 @@ def render_svg(points, repo, theme_name, updated=None):
         y = sy(v)
         parts.append(
             f'<line x1="{MARGIN_L}" y1="{y:.1f}" x2="{WIDTH - MARGIN_R}" y2="{y:.1f}" '
-            f'stroke="{t["grid"]}" stroke-width="1" stroke-dasharray="3,3"/>'
+            f'stroke="{t["grid"]}" stroke-width="1"/>'
         )
         parts.append(
             f'<text x="{MARGIN_L - 8}" y="{y + 4:.1f}" font-family="{FONT}" '
-            f'font-size="12" text-anchor="end" fill="{t["muted"]}">{_fmt_stars(int(v))}</text>'
+            f'font-size="12" text-anchor="end" fill="{t["muted"]}">{_fmt_axis(v)}</text>'
         )
         v += y_step
 
@@ -140,10 +157,10 @@ def render_svg(points, repo, theme_name, updated=None):
     area_path = (line_path
                  + f" L{coords[-1][0]:.1f},{baseline:.1f}"
                  + f" L{coords[0][0]:.1f},{baseline:.1f} Z")
-    parts.append(f'<path d="{area_path}" fill="{t["area"]}" fill-opacity="0.10"/>')
+    parts.append(f'<path d="{area_path}" fill="url(#area-{theme_name})"/>')
     parts.append(
         f'<path d="{line_path}" fill="none" stroke="{t["line"]}" '
-        f'stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+        f'stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
     )
 
     # End dot + count label
